@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { 
-  Calendar, 
-  Users, 
-  ListChecks, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  Calendar,
+  Users,
+  ListChecks,
+  ChevronDown,
+  ChevronUp,
   User,
   Bell,
   Settings,
@@ -14,11 +14,13 @@ import {
   AlertCircle
 } from "lucide-react";
 import Board from "./Board";
+import NavigationBar from "../components/Navbar";
+import Backlog from "./Backlog";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("projects");
   const [expandedTeam, setExpandedTeam] = useState(null);
-  
+
   const teams = [
     {
       id: 1,
@@ -85,211 +87,184 @@ export default function Dashboard() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      <div className="w-full bg-gradient-to-r from-gray-800 to-gray-900 shadow-lg border-b border-gray-700">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="w-8"></div>
-          
-          <div className="flex space-x-4">
-            {["projects", "tasks", "teams", "sprints", "calendar", "board"].map((tab) => (
-              <button
-                key={tab}
-                className={`px-4 py-2 rounded-md ${
-                  activeTab === tab 
-                    ? "bg-blue-600 text-white font-medium shadow-md" 
-                    : "text-gray-300 hover:text-white hover:bg-gray-700"
-                } transition-colors text-sm font-medium tracking-wide`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button className="text-gray-300 hover:text-white">
-              <Bell size={20} />
-            </button>
-            <button className="text-gray-300 hover:text-white">
-              <Settings size={20} />
-            </button>
-            <button className="flex items-center space-x-2 bg-gray-700 p-2 rounded-full hover:bg-gray-600">
-              <span className="text-sm mr-2 hidden sm:inline">John Doe</span>
-              <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
-                <User size={18} />
-              </div>
-            </button>
-          </div>
-        </div>
-      </div>
+  const renderContent = () => {
+    switch(activeTab) {
+      case "board":
+        return <Board />;
+      case "backlog":
+        return <Backlog />;
+      default:
+        return (
+            <div className="container mx-auto px-4 py-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
+                  <h2 className="text-xl font-semibold mb-3 flex items-center border-b border-gray-700 pb-2">
+                    <ListChecks className="mr-2 text-blue-400" /> Assigned Tasks
+                  </h2>
+                  <div className="max-h-64 overflow-y-auto pr-1">
+                    {tasks.map(task => (
+                        <div
+                            key={task.id}
+                            className="mb-2 bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors cursor-pointer flex justify-between items-center"
+                        >
+                          <div>
+                            <div className="font-medium">{task.title}</div>
+                            <div className="text-xs text-gray-400">Due: {task.dueDate}</div>
+                          </div>
+                          <div className={`${getPriorityColor(task.priority)} text-xs px-2 py-1 rounded-full text-white`}>
+                            {task.priority}
+                          </div>
+                        </div>
+                    ))}
+                  </div>
+                </div>
 
-      {activeTab === "board" ? (
-        <Board />
-      ) : (
-        <div className="container mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-3 flex items-center border-b border-gray-700 pb-2">
-                <ListChecks className="mr-2 text-blue-400" /> Assigned Tasks
-              </h2>
-              <div className="max-h-64 overflow-y-auto pr-1">
-                {tasks.map(task => (
-                  <div 
-                    key={task.id} 
-                    className="mb-2 bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors cursor-pointer flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="font-medium">{task.title}</div>
-                      <div className="text-xs text-gray-400">Due: {task.dueDate}</div>
-                    </div>
-                    <div className={`${getPriorityColor(task.priority)} text-xs px-2 py-1 rounded-full text-white`}>
-                      {task.priority}
-                    </div>
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
+                  <h2 className="text-xl font-semibold mb-3 flex items-center border-b border-gray-700 pb-2">
+                    <Calendar className="mr-2 text-purple-400" /> Upcoming Deadlines
+                  </h2>
+                  <div className="max-h-64 overflow-y-auto pr-1">
+                    {deadlines.map(deadline => (
+                        <div
+                            key={deadline.id}
+                            className="mb-2 bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors cursor-pointer flex justify-between items-center"
+                        >
+                          <div>
+                            <div className="font-medium">{deadline.title}</div>
+                            <div className="text-xs text-gray-400">{deadline.date}</div>
+                          </div>
+                          <div className={`flex items-center ${deadline.daysLeft <= 2 ? 'text-red-400' : 'text-yellow-400'}`}>
+                            <Clock size={14} className="mr-1" />
+                            <span className="text-xs">{deadline.daysLeft} {deadline.daysLeft === 1 ? 'day' : 'days'}</span>
+                          </div>
+                        </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-3 flex items-center border-b border-gray-700 pb-2">
-                <Calendar className="mr-2 text-purple-400" /> Upcoming Deadlines
-              </h2>
-              <div className="max-h-64 overflow-y-auto pr-1">
-                {deadlines.map(deadline => (
-                  <div 
-                    key={deadline.id} 
-                    className="mb-2 bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors cursor-pointer flex justify-between items-center"
-                  >
-                    <div>
-                      <div className="font-medium">{deadline.title}</div>
-                      <div className="text-xs text-gray-400">{deadline.date}</div>
-                    </div>
-                    <div className={`flex items-center ${deadline.daysLeft <= 2 ? 'text-red-400' : 'text-yellow-400'}`}>
-                      <Clock size={14} className="mr-1" />
-                      <span className="text-xs">{deadline.daysLeft} {deadline.daysLeft === 1 ? 'day' : 'days'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
-              <h2 className="text-xl font-semibold mb-3 flex items-center border-b border-gray-700 pb-2">
-                <Users className="mr-2 text-indigo-400" /> Assigned Sprints
-              </h2>
-              <div className="max-h-64 overflow-y-auto pr-1">
-                {sprints.map(sprint => (
-                  <div 
-                    key={sprint.id} 
-                    className="mb-2 bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors cursor-pointer"
-                  >
-                    <div className="flex justify-between mb-1">
-                      <div className="font-medium">{sprint.name}</div>
-                      <div className="text-xs text-gray-400">
-                        {sprint.startDate} - {sprint.endDate}
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-600 h-2 rounded-full mt-2">
-                      <div 
-                        className="bg-indigo-500 h-2 rounded-full" 
-                        style={{ width: `${sprint.progress}%` }}
-                      ></div>
-                    </div>
-                    <div className="text-xs text-right mt-1 text-gray-300">{sprint.progress}% complete</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                </div>
 
-          <div className="mt-6 bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 flex items-center">
-              <Users className="mr-2 text-green-400" /> Teams
-            </h2>
-            <div className="space-y-3">
-              {teams.map((team) => (
-                <div key={team.id} className="bg-gray-700 rounded-lg">
-                  <div 
-                    className="flex justify-between items-center cursor-pointer p-3 hover:bg-gray-600 transition-colors rounded-lg"
-                    onClick={() => toggleTeam(team.id)}
-                  >
-                    <h3 className="font-medium flex items-center">
-                      <Users size={16} className="mr-2 text-blue-300" />
-                      {team.name}
-                    </h3>
-                    {expandedTeam === team.id ? (
-                      <ChevronUp size={18} />
-                    ) : (
-                      <ChevronDown size={18} />
-                    )}
-                  </div>
-                  
-                  {expandedTeam === team.id && (
-                    <div className="p-3 pt-0 border-t border-gray-600 mt-1">
-                      <div className="max-h-48 overflow-y-auto pr-1">
-                        {team.members.map((member, idx) => (
-                          <div key={idx} className="flex items-center p-2 hover:bg-gray-600 rounded-md my-1 cursor-pointer">
-                            <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 text-xs font-bold">
-                              {member.avatar}
-                            </div>
-                            <div>
-                              <div className="font-medium">{member.name}</div>
-                              <div className="text-xs text-gray-400">{member.role}</div>
+                <div className="bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
+                  <h2 className="text-xl font-semibold mb-3 flex items-center border-b border-gray-700 pb-2">
+                    <Users className="mr-2 text-indigo-400" /> Assigned Sprints
+                  </h2>
+                  <div className="max-h-64 overflow-y-auto pr-1">
+                    {sprints.map(sprint => (
+                        <div
+                            key={sprint.id}
+                            className="mb-2 bg-gray-700 p-3 rounded-md hover:bg-gray-600 transition-colors cursor-pointer"
+                        >
+                          <div className="flex justify-between mb-1">
+                            <div className="font-medium">{sprint.name}</div>
+                            <div className="text-xs text-gray-400">
+                              {sprint.startDate} - {sprint.endDate}
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                          <div className="w-full bg-gray-600 h-2 rounded-full mt-2">
+                            <div
+                                className="bg-indigo-500 h-2 rounded-full"
+                                style={{ width: `${sprint.progress}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs text-right mt-1 text-gray-300">{sprint.progress}% complete</div>
+                        </div>
+                    ))}
+                  </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="mt-6 bg-gradient-to-br from-gray-800 to-gray-900 p-4 rounded-lg shadow-md">
+                <h2 className="text-xl font-semibold mb-4 border-b border-gray-700 pb-2 flex items-center">
+                  <Users className="mr-2 text-green-400" /> Teams
+                </h2>
+                <div className="space-y-3">
+                  {teams.map((team) => (
+                      <div key={team.id} className="bg-gray-700 rounded-lg">
+                        <div
+                            className="flex justify-between items-center cursor-pointer p-3 hover:bg-gray-600 transition-colors rounded-lg"
+                            onClick={() => toggleTeam(team.id)}
+                        >
+                          <h3 className="font-medium flex items-center">
+                            <Users size={16} className="mr-2 text-blue-300" />
+                            {team.name}
+                          </h3>
+                          {expandedTeam === team.id ? (
+                              <ChevronUp size={18} />
+                          ) : (
+                              <ChevronDown size={18} />
+                          )}
+                        </div>
+
+                        {expandedTeam === team.id && (
+                            <div className="p-3 pt-0 border-t border-gray-600 mt-1">
+                              <div className="max-h-48 overflow-y-auto pr-1">
+                                {team.members.map((member, idx) => (
+                                    <div key={idx} className="flex items-center p-2 hover:bg-gray-600 rounded-md my-1 cursor-pointer">
+                                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-3 text-xs font-bold">
+                                        {member.avatar}
+                                      </div>
+                                      <div>
+                                        <div className="font-medium">{member.name}</div>
+                                        <div className="text-xs text-gray-400">{member.role}</div>
+                                      </div>
+                                    </div>
+                                ))}
+                              </div>
+                            </div>
+                        )}
+                      </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-gradient-to-br from-blue-900 to-blue-800 p-4 rounded-lg shadow-md flex items-center">
+                  <div className="bg-blue-700 p-3 rounded-lg mr-3">
+                    <CheckCircle size={24} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold">75%</div>
+                    <div className="text-sm text-blue-300">Tasks Completed</div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-900 to-purple-800 p-4 rounded-lg shadow-md flex items-center">
+                  <div className="bg-purple-700 p-3 rounded-lg mr-3">
+                    <AlertCircle size={24} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold">3</div>
+                    <div className="text-sm text-purple-300">Critical Issues</div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-900 to-green-800 p-4 rounded-lg shadow-md flex items-center">
+                  <div className="bg-green-700 p-3 rounded-lg mr-3">
+                    <Users size={24} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold">12</div>
+                    <div className="text-sm text-green-300">Team Members</div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 p-4 rounded-lg shadow-md flex items-center">
+                  <div className="bg-indigo-700 p-3 rounded-lg mr-3">
+                    <BarChart2 size={24} />
+                  </div>
+                  <div>
+                    <div className="text-xl font-bold">89%</div>
+                    <div className="text-sm text-indigo-300">Sprint Progress</div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-gradient-to-br from-blue-900 to-blue-800 p-4 rounded-lg shadow-md flex items-center">
-              <div className="bg-blue-700 p-3 rounded-lg mr-3">
-                <CheckCircle size={24} />
-              </div>
-              <div>
-                <div className="text-xl font-bold">75%</div>
-                <div className="text-sm text-blue-300">Tasks Completed</div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-purple-900 to-purple-800 p-4 rounded-lg shadow-md flex items-center">
-              <div className="bg-purple-700 p-3 rounded-lg mr-3">
-                <AlertCircle size={24} />
-              </div>
-              <div>
-                <div className="text-xl font-bold">3</div>
-                <div className="text-sm text-purple-300">Critical Issues</div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-green-900 to-green-800 p-4 rounded-lg shadow-md flex items-center">
-              <div className="bg-green-700 p-3 rounded-lg mr-3">
-                <Users size={24} />
-              </div>
-              <div>
-                <div className="text-xl font-bold">12</div>
-                <div className="text-sm text-green-300">Team Members</div>
-              </div>
-            </div>
-            
-            <div className="bg-gradient-to-br from-indigo-900 to-indigo-800 p-4 rounded-lg shadow-md flex items-center">
-              <div className="bg-indigo-700 p-3 rounded-lg mr-3">
-                <BarChart2 size={24} />
-              </div>
-              <div>
-                <div className="text-xl font-bold">89%</div>
-                <div className="text-sm text-indigo-300">Sprint Progress</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+        );
+    }
+  };
+
+  return (
+      <div className="min-h-screen bg-gray-900 text-white">
+        <NavigationBar activeTab={activeTab} setActiveTab={setActiveTab} />
+        {renderContent()}
+      </div>
   );
 }
